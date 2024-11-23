@@ -8,6 +8,8 @@ use serde_derive::Serialize;
 use log::info;
 
 pub mod errors;
+pub mod requests;
+pub mod responses;
 mod http;
 
 pub struct MisskeyHttpClient {
