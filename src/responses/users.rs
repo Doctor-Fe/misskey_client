@@ -12,7 +12,7 @@ pub struct LiteUserInfo {
     host: Option<String>,
     avatar_url: Option<String>,
     avatar_blur_hash: Option<String>,
-    avatar_decorations: Vec<DecorationInfo>,
+    avatar_decorations: Vec<AvatarDecorationInfo>,
     is_bot: bool,
     is_cat: bool,
     instance: Option<InstanceInfo>,
@@ -68,8 +68,10 @@ impl FromStr for OnlineStatus {
 
 #[derive(Debug, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
-pub struct DecorationInfo {
+pub struct AvatarDecorationInfo {
     id: String,
+    angle: f64,
+    flip_h: bool,
     #[serde(default)]
     offset_x: f64,
     #[serde(default)]

@@ -99,7 +99,7 @@ struct RequestWithToken<'a, T> where T: MisskeyClientRequest + Serialize {
 }
 
 impl<'a, T> RequestWithToken<'a, T> where T: MisskeyClientRequest + Serialize {
-    pub fn new(token: Option<&'a str>, request: &'a T) -> Self {
+    fn new(token: Option<&'a str>, request: &'a T) -> Self {
         Self {
             token,
             request,

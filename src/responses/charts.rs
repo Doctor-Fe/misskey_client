@@ -14,10 +14,3 @@ pub struct ActiveUserInfo {
     registered_outside_month: Vec<i32>,
     registered_outside_year: Vec<i32>,
 }
-
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ChartSpan {
-    Day,
-    Hour,
-}
