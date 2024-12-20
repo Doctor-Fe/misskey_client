@@ -3,7 +3,6 @@ use std::{io::{self, Write}, net::TcpStream};
 use errors::{MisskeyConnectionError, MisskeyConnectionResult};
 use native_tls::{TlsConnector, TlsStream};
 use serde::{Deserialize, Serialize};
-use serde_derive::Serialize;
 #[cfg(feature = "log")]
 use log::info;
 
@@ -46,7 +45,7 @@ impl MisskeyHttpClient {
                 #[cfg(feature = "log")]
                 info!("Sending request: {}", data);
                 let length = data.as_bytes().len();
-                let req = http::requests::HttpRequest::new(http::requests::Method::Post, T::ENDPOINT, "HTTP/1.1")
+                let req = http::requests::HttpRequest::new(http::requests::Method::Post, format!("/api{}", T::ENDPOINT), "HTTP/1.1")
                     .header("Accept-Chatset", "UTF-8")
                     .header("Accept-Encoding", "identity")
                     .header("Connection", "keep-alive")
@@ -84,13 +83,14 @@ impl MisskeyHttpClient {
 
 /// Misskey サーバーへ送信可能な構造体であることを示すトレイト
 pub trait MisskeyClientRequest : Serialize where for<'de> Self::Response: Deserialize<'de> {
-    /// リクエスト先のエンドポイントのアドレス。
+    /// リクエスト先のエンドポイントのアドレス。<br />
+    /// 先頭にスラッシュが必要。`/api` は不要。
     const ENDPOINT: &'static str;
     /// レスポンスの型
     type Response;
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, serde_derive::Serialize)]
 struct RequestWithToken<'a, T> where T: MisskeyClientRequest + Serialize {
     #[serde(rename = "i", skip_serializing_if = "Option::is_none")]
     token: Option<&'a str>,

@@ -32,7 +32,7 @@ impl<'a> GetLiteUserInfo<'a> {
 }
 
 impl MisskeyClientRequest for GetLiteUserInfo<'_> {
-    const ENDPOINT: &'static str = "/api/users/show";
+    const ENDPOINT: &'static str = "/users/show";
 
     type Response = LiteUserInfo;
 }
@@ -147,7 +147,7 @@ impl<'a> GetNotes<'a> {
 }
 
 impl MisskeyClientRequest for GetNotes<'_> {
-    const ENDPOINT: &'static str = "/api/users/notes";
+    const ENDPOINT: &'static str = "/users/notes";
 
     type Response = Vec<NoteInfo>;
 }

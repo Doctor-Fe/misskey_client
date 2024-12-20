@@ -9,5 +9,5 @@ pub struct GetSelfData;
 
 impl MisskeyClientRequest for GetSelfData {
     type Response = LiteUserInfo;
-    const ENDPOINT: &'static str = "/api/i";
+    const ENDPOINT: &'static str = "/i";
 }

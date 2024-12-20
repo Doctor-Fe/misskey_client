@@ -83,7 +83,7 @@ impl GetNotifications {
 }
 
 impl MisskeyClientRequest for GetNotifications {
-    const ENDPOINT: &'static str = "/api/i/notifications";
+    const ENDPOINT: &'static str = "/i/notifications";
 
     type Response = Vec<NotificationInfo>;
 }

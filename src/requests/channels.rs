@@ -6,7 +6,7 @@ use crate::{responses::channels::ChannelInfo, MisskeyClientRequest};
 pub struct GetFavoriteChannels;
 
 impl MisskeyClientRequest for GetFavoriteChannels {
-    const ENDPOINT: &'static str = "/api/channels/my-favorites";
+    const ENDPOINT: &'static str = "/channels/my-favorites";
 
     type Response = Vec<ChannelInfo>;
 }

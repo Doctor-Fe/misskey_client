@@ -10,7 +10,7 @@ pub struct GetActiveUsers {
 }
 
 impl MisskeyClientRequest for GetActiveUsers {
-    const ENDPOINT: &'static str = "/api/charts/active-users";
+    const ENDPOINT: &'static str = "/charts/active-users";
 
     type Response = ActiveUserInfo;
 }

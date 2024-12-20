@@ -21,7 +21,7 @@ impl<'a> CreateNote<'a> {
 }
 
 impl MisskeyClientRequest for CreateNote<'_> {
-    const ENDPOINT: &'static str = "/api/notes/create";
+    const ENDPOINT: &'static str = "/notes/create";
 
     type Response = CreatedNoteInfo;
 }
@@ -95,7 +95,7 @@ impl<'a> SearchNote<'a> {
 }
 
 impl MisskeyClientRequest for SearchNote<'_> {
-    const ENDPOINT: &'static str = "/api/notes/search";
+    const ENDPOINT: &'static str = "/notes/search";
 
     type Response = Vec<NoteInfo>;
 }
@@ -113,7 +113,7 @@ impl DeleteNote {
 }
 
 impl MisskeyClientRequest for DeleteNote {
-    const ENDPOINT: &'static str = "/api/notes/delete";
+    const ENDPOINT: &'static str = "/notes/delete";
 
     type Response = ();
 }
