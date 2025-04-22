@@ -3,6 +3,8 @@ use std::{fmt::Display, str::FromStr};
 use derive_getters::Getters;
 use serde_derive::{Deserialize, Serialize};
 
+use crate::UnknownValue;
+
 #[derive(Debug, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
 pub struct LiteUserInfo {
@@ -16,9 +18,9 @@ pub struct LiteUserInfo {
     is_bot: bool,
     is_cat: bool,
     instance: Option<InstanceInfo>,
-    emojis: serde_json::Value, // 用途不明
+    emojis: UnknownValue, // 用途不明
     online_status: OnlineStatus,
-    badge_roles: Vec<BadgeRoleInfo>,
+    #[serde(default)] badge_roles: Vec<BadgeRoleInfo>,
 }
 
 #[derive(Debug, Deserialize, Getters)]
@@ -70,13 +72,11 @@ impl FromStr for OnlineStatus {
 #[serde(rename_all = "camelCase")]
 pub struct AvatarDecorationInfo {
     id: String,
-    angle: f64,
-    flip_h: bool,
-    #[serde(default)]
-    offset_x: f64,
-    #[serde(default)]
-    offset_y: f64,
+    #[serde(default)] angle: f64,
+    #[serde(default)] flip_h: bool,
     url: String,
+    #[serde(default)] offset_x: f64,
+    #[serde(default)] offset_y: f64,
 }
 
 #[derive(Debug, Deserialize, Getters)]
@@ -86,4 +86,18 @@ pub struct BadgeRoleInfo {
     icon_url: Option<String>,
     display_order: i32,
     behavior: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Getters)]
+#[serde(rename_all = "camelCase")]
+pub struct RelationInfo {
+    id: String,
+    is_following: bool,
+    has_pending_follow_request_from_you: bool,
+    has_pending_follow_request_to_you: bool,
+    is_followed: bool,
+    is_blocking: bool,
+    is_blocked: bool,
+    is_muted: bool,
+    is_renote_muted: bool,
 }

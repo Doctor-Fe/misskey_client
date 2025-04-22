@@ -1,7 +1,9 @@
 use derive_getters::Getters;
 use serde_derive::{Deserialize, Serialize};
 
-use super::{notes::NoteInfo, users::LiteUserInfo};
+use crate::UnknownValue;
+
+use super::{notes::{NoteInfo, UserPolicies}, users::LiteUserInfo};
 
 #[derive(Debug, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
@@ -109,13 +111,13 @@ pub struct RoleInfo {
     created_at: String,
     updated_at: String,
     target: RoleTarget,
-    cond_formula: serde_json::Value,
+    cond_formula: UnknownValue,
     is_public: bool,
     is_explorable: bool,
     as_badge: bool,
     badge_behavior: Option<String>,
     can_edit_members_by_moderator: bool,
-    policies: serde_json::Value,
+    policies: UserPolicies,
     users_count: usize,
 }
 

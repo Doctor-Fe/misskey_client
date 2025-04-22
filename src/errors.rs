@@ -1,6 +1,7 @@
 use std::{error::Error, fmt::Display, io, net::TcpStream};
 
 use derive_getters::Getters;
+use http::uri::{InvalidUri, InvalidUriParts};
 use serde_derive::Deserialize;
 
 pub type MisskeyConnectionResult<T> = Result<T, MisskeyConnectionError>;
@@ -17,10 +18,13 @@ pub enum MisskeyConnectionError {
     IoError(io::Error),
     
     // クライアント側で発生したエラー。
+    /// 無効な URI
+    InvalidUriError(http::uri::InvalidUriParts),
+    /// 無効なアドレス
+    InvalidAuthorityError(http::uri::InvalidUri),
     /// シリアル化または逆シリアル化に失敗したとき
     SerdeError(serde_json::Error),
-    
-    // Misskey サーバーからエラーの応答があったとき。
+    /// Misskey サーバーからエラーの応答があったとき。
     ServerResponseError(ServerError),
 }
 
@@ -29,6 +33,48 @@ impl Error for MisskeyConnectionError {}
 impl Display for MisskeyConnectionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
+    }
+}
+
+impl From<io::Error> for MisskeyConnectionError {
+    fn from(value: io::Error) -> Self {
+        Self::IoError(value)
+    }
+}
+
+impl From<native_tls::Error> for MisskeyConnectionError {
+    fn from(value: native_tls::Error) -> Self {
+        Self::TlsError(value)
+    }
+}
+
+impl From<native_tls::HandshakeError<TcpStream>> for MisskeyConnectionError {
+    fn from(value: native_tls::HandshakeError<TcpStream>) -> Self {
+        Self::TlsHandshakeError(value)
+    }
+}
+
+impl From<serde_json::Error> for MisskeyConnectionError {
+    fn from(value: serde_json::Error) -> Self {
+        Self::SerdeError(value)
+    }
+}
+
+impl From<ServerError> for MisskeyConnectionError {
+    fn from(value: ServerError) -> Self {
+        Self::ServerResponseError(value)
+    }
+}
+
+impl From<InvalidUriParts> for MisskeyConnectionError {
+    fn from(value: InvalidUriParts) -> Self {
+        Self::InvalidUriError(value)
+    }
+}
+
+impl From<InvalidUri> for MisskeyConnectionError {
+    fn from(value: InvalidUri) -> Self {
+        Self::InvalidAuthorityError(value)
     }
 }
 

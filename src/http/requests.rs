@@ -1,4 +1,6 @@
-use std::{collections::BTreeMap, fmt::Display, io::{self, Write}};
+use std::{collections::BTreeMap, fmt::Display};
+
+use itertools::Itertools;
 
 pub(crate) struct HttpRequest {
     version: String,
@@ -15,7 +17,7 @@ impl HttpRequest {
             uri: uri.to_string(),
             method,
             headers: BTreeMap::new(),
-            body: vec![],
+            body: Vec::with_capacity(0),
         }
     }
 
@@ -24,24 +26,29 @@ impl HttpRequest {
         self
     }
 
-    pub fn body(self, body: Vec<u8>) -> Self {
+    pub fn body(self, body: impl Iterator<Item = u8>) -> Self {
         Self {
-            body,
+            body: body.collect(),
             .. self
         }
     }
+}
 
-    pub fn write_to(&self, stream: &mut dyn Write) -> io::Result<()> {
-        write!(stream, "{} {} {}\r\n", self.method, self.uri, self.version)?;
-        for i in &self.headers {
-            write!(stream, "{}: {}\r\n", i.0, format!("{:?}", i.1).trim_matches('"'))?;
+impl IntoIterator for HttpRequest {
+    type Item = u8;
+
+    type IntoIter = std::vec::IntoIter<u8>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut s = format!("{} {} {}\r\n{}\r\n\r\n", self.method, self.uri, self.version, self.headers.into_iter().map(|a| format!("{}: {}", a.0, a.1)).join("\r\n")).into_bytes();
+        for i in self.body {
+            s.push(i);
         }
-        write!(stream, "\r\n")?;
-        stream.write_all(&self.body)?;
-        Ok(())
+        return s.into_iter();
     }
 }
 
+#[allow(unused)]
 pub(crate) enum Method {
     Delete,
     Get,
@@ -56,7 +63,7 @@ impl Display for Method {
         write!(f, "{}", match self {
             Self::Delete => "DELETE",
             Self::Get => "GET",
-            Self::Head => "GET",
+            Self::Head => "HEAD",
             Self::Post => "POST",
             Self::Put => "PUT",
             Self::Trace => "TRACE",

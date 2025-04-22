@@ -1,22 +1,101 @@
 use serde_derive::Serialize;
 
-use crate::{responses::notes::{CreatedNoteInfo, NoteInfo, NoteVisibility}, MisskeyClientRequest};
+use crate::{responses::notes::{CreatedNoteInfo, NoteInfo, NoteVisibility}, traits::{ChannelId, NoteId}, MisskeyClientRequest};
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateNote<'a> {
-    text: &'a str,
-    cw: Option<&'a str>,
     visibility: NoteVisibility,
+    // visible_user_ids: Vec<String>,
+    cw: Option<&'a str>,
+    local_only: bool,
+    // reaction_acceptance: Option<String>,
+    no_extract_mentions: bool,
+    no_extract_hashtags: bool,
+    no_extract_emojis: bool,
+    reply_id: Option<String>,
+    renote_id: Option<String>,
+    channel_id: Option<String>,
+    text: &'a str,
+    // file_ids: Vec<String>,
+    // media_ids: Vec<String>,
+    // poll: Poll,
+    // scheduled_at: usize,
+    // no_created_note: usize,
+}
+
+impl CreateNote<'_> {
+    pub fn renote(visibility: NoteVisibility, renote_id: impl NoteId) -> Self {
+        Self {
+            visibility,
+            cw: None,
+            local_only: false,
+            no_extract_hashtags: false,
+            no_extract_mentions: false,
+            no_extract_emojis: false,
+            reply_id: None,
+            renote_id: Some(renote_id.to_note_id()),
+            channel_id: None,
+            text: "",
+        }
+    }
 }
 
 impl<'a> CreateNote<'a> {
-    pub fn new(text: &'a str, visibility: NoteVisibility) -> Self {
-        Self { text, cw: None, visibility }
+    pub fn note(text: &'a str, visibility: NoteVisibility) -> Self {
+        Self {
+            visibility,
+            cw: None,
+            local_only: false,
+            no_extract_hashtags: false,
+            no_extract_mentions: false,
+            no_extract_emojis: false,
+            reply_id: None,
+            renote_id: None,
+            channel_id: None,
+            text,
+        }
+    }
+
+    pub fn quote(text: &'a str, visibility: NoteVisibility, renote_id: impl NoteId) -> Self {
+        Self {
+            visibility,
+            cw: None,
+            local_only: false,
+            no_extract_hashtags: false,
+            no_extract_mentions: false,
+            no_extract_emojis: false,
+            reply_id: None,
+            renote_id: Some(renote_id.to_note_id()),
+            channel_id: None,
+            text,
+        }
     }
 
     pub fn cw(mut self, cw: &'a str) -> Self {
         self.cw = Some(cw);
         self
+    }
+
+    pub fn local_only(self) -> Self {
+        Self {
+            local_only: true,
+            .. self
+        }
+    }
+
+    pub fn reply(self, reply_id: impl NoteId) -> Self {
+        Self {
+            reply_id: Some(reply_id.to_note_id()),
+            .. self
+        }
+    }
+
+    pub fn channel(self, channel_id: impl ChannelId) -> Self {
+        Self {
+             channel_id: Some(channel_id.to_channel_id()),
+             .. self
+        }
     }
 }
 
@@ -30,18 +109,13 @@ impl MisskeyClientRequest for CreateNote<'_> {
 #[serde(rename_all = "camelCase")]
 pub struct SearchNote<'a> {
     query: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    since_id: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    until_id: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")] since_id: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")] until_id: Option<&'a str>,
     limit: usize,
     offset: usize,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    host: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    user_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    channel_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")] host: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")] user_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")] channel_id: Option<String>,
 }
 
 impl<'a> SearchNote<'a> {
@@ -114,6 +188,6 @@ impl DeleteNote {
 
 impl MisskeyClientRequest for DeleteNote {
     const ENDPOINT: &'static str = "/notes/delete";
-
+    
     type Response = ();
 }

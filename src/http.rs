@@ -80,24 +80,21 @@ pub(crate) fn read(stream: &mut dyn Read) -> io::Result<String> {
     const BUFF_SIZE: usize = 1;
     let mut result = Vec::new();
     let mut buff: [u8; BUFF_SIZE] = [0; BUFF_SIZE];
-    loop {
+    while !result.ends_with(b"\r\n\r\n") {
         match stream.read(&mut buff) {
             Ok(size) => {
                 for i in 0..size {
                     result.push(buff[i]);
                 }
             }
-            Err(e) => panic!("{}", e),
-        }
-        if result.ends_with(b"\r\n\r\n") {
-            break;
+            Err(e) => return Err(e),
         }
     }
     let headers = String::from_utf8_lossy(&result);
     let mut headers = headers.split('\n').map(|a| a.trim());
     let mut first = headers.next().unwrap().split(' ').peekable();
-    let version = first.next().unwrap();
-    let code = first.next().unwrap();
+    let _version = first.next().unwrap();
+    let _code = first.next().unwrap();
     let mut message = String::new();
     while let Some(a) = first.next() {
         message.push_str(a);
@@ -107,14 +104,19 @@ pub(crate) fn read(stream: &mut dyn Read) -> io::Result<String> {
     }
     let mut length: Option<usize> = None;
     for i in headers {
-        if i.starts_with("Content-Length") {
+        if i.to_ascii_lowercase().starts_with("content-length") {
             length = i.split(':').skip(1).next().map(|a| a.trim().parse::<usize>().ok()).flatten();
             break;
         }
     }
-    let mut buff = vec![0; length.unwrap_or(0)];
-    stream.read_exact(&mut buff).unwrap();
-    return Ok(String::from_utf8_lossy(&buff).to_string());
+    let length = length.unwrap_or(0);
+    if length > 0 {
+        let mut buff = vec![0; length];
+        stream.read_exact(&mut buff)?;
+        return Ok(String::from_utf8_lossy(&buff).to_string());
+    } else {
+        return Ok(String::new());
+    }
 }
 
 #[derive(Debug)]

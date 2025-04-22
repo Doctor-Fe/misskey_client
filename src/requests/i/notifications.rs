@@ -8,10 +8,8 @@ use crate::{responses::notifications::NotificationInfo, MisskeyClientRequest};
 #[serde(rename_all = "camelCase")]
 pub struct GetNotifications {
     limit: usize,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    since_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    until_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")] since_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")] until_id: Option<String>,
     mark_as_read: bool,
     include_types: HashSet<NotificationType>,
     exclude_types: HashSet<NotificationType>,

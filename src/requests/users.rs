@@ -2,8 +2,7 @@ use chrono::{DateTime, Utc};
 use serde_derive::Serialize;
 
 use crate::{
-    responses::{notes::NoteInfo, users::LiteUserInfo},
-    MisskeyClientRequest,
+    responses::{notes::NoteInfo, users::{LiteUserInfo, RelationInfo}}, traits::UserId, MaybeMultiple, MisskeyClientRequest
 };
 
 /// ユーザー名をもとに、簡略化されたユーザー情報を取得する
@@ -150,4 +149,34 @@ impl MisskeyClientRequest for GetNotes<'_> {
     const ENDPOINT: &'static str = "/users/notes";
 
     type Response = Vec<NoteInfo>;
+}
+
+#[derive(Debug, Serialize)]
+pub struct GetRelation {
+    #[serde(rename = "userId", skip_serializing_if = "Option::is_none")]
+    user_id: Option<String>,
+    #[serde(rename = "userId", skip_serializing_if = "Vec::is_empty")]
+    user_ids: Vec<String>,
+}
+
+impl GetRelation {
+    pub fn single(user_id: impl UserId) -> Self {
+        Self {
+            user_id: Some(user_id.to_user_id()),
+            user_ids: Vec::with_capacity(0),
+        }
+    }
+
+    pub fn multiple<T: UserId>(user_ids: impl IntoIterator<Item = T>) -> Self {
+        Self {
+            user_id: None,
+            user_ids: user_ids.into_iter().map(|a| a.to_user_id()).collect(),
+        }
+    }
+}
+
+impl MisskeyClientRequest for GetRelation {
+    const ENDPOINT: &'static str = "/users/relation";
+
+    type Response = MaybeMultiple<RelationInfo>;
 }
