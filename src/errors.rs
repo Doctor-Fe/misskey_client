@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display, io, net::TcpStream, string::FromUtf8Error};
+use std::{error::Error, fmt::Display, io, string::FromUtf8Error};
 
 use derive_getters::Getters;
 use http::uri::InvalidUri;
@@ -10,10 +10,6 @@ pub type MisskeyConnectionResult<T> = Result<T, MisskeyConnectionError>;
 pub enum MisskeyConnectionError {
     // リクエスト送受信処理中に発生する可能性のあるエラーが発生したとき。
 
-    /// TLS 接続時にエラーが発生したとき。
-    TlsError(native_tls::Error),
-    /// TLS ハンドシェイク時にエラーが発生したとき。
-    TlsHandshakeError(native_tls::HandshakeError<TcpStream>),
     /// TCP 通信にエラーが発生したとき。
     IoError(io::Error),
     /// HTTP 通信でエラーが発生したとき。
@@ -49,18 +45,6 @@ impl From<io::Error> for MisskeyConnectionError {
 impl From<http::Error> for MisskeyConnectionError {
     fn from(value: http::Error) -> Self {
         Self::HttpError(value)
-    }
-}
-
-impl From<native_tls::Error> for MisskeyConnectionError {
-    fn from(value: native_tls::Error) -> Self {
-        Self::TlsError(value)
-    }
-}
-
-impl From<native_tls::HandshakeError<TcpStream>> for MisskeyConnectionError {
-    fn from(value: native_tls::HandshakeError<TcpStream>) -> Self {
-        Self::TlsHandshakeError(value)
     }
 }
 

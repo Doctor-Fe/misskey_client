@@ -1,9 +1,8 @@
-use std::{io::{Read, Write}, net::TcpStream};
+use std::io::{Read, Write};
 
 use errors::{MisskeyConnectionResult, ServerError};
 use http::{uri::Authority, Request, Version};
 use miauth::MiAuthBuilder;
-use native_tls::TlsStream;
 use serde::{Deserialize, Serialize};
 
 // TODO レスポンス型に Clone トレイトを実装するべきか否かの検討。
@@ -20,17 +19,6 @@ pub struct MisskeyHttpClient<T> where T: Read + Write {
     access_token: Option<String>,
     authority: Authority,
     stream: T,
-}
-
-impl MisskeyHttpClient<TlsStream<TcpStream>> {
-    #[inline]
-    pub fn new_ssl(server_address: impl Into<String>) -> MisskeyConnectionResult<MisskeyHttpClient<TlsStream<TcpStream>>> {
-        let authority: Authority = server_address.into().parse()?;
-        let connector = native_tls::TlsConnector::new()?;
-        let stream = std::net::TcpStream::connect(authority.to_string())?;
-        let stream = connector.connect(authority.host(), stream)?;
-        Ok(MisskeyHttpClient::internal_new(stream, authority, None))
-    }
 }
 
 impl<T> MisskeyHttpClient<T> where T: Read + Write {
