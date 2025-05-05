@@ -31,7 +31,7 @@ impl<T> MiAuth<T> where T: Read + Write {
         }
     }
 
-    pub fn get_uri(&self) -> &String {
+    pub fn get_uri(&self) -> &str {
         &self.uri
     }
 }
