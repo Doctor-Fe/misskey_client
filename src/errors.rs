@@ -1,7 +1,7 @@
-use std::{error::Error, fmt::Display, io, net::TcpStream};
+use std::{error::Error, fmt::Display, io, net::TcpStream, string::FromUtf8Error};
 
 use derive_getters::Getters;
-use http::uri::{InvalidUri, InvalidUriParts};
+use http::uri::InvalidUri;
 use serde_derive::Deserialize;
 
 pub type MisskeyConnectionResult<T> = Result<T, MisskeyConnectionError>;
@@ -16,12 +16,16 @@ pub enum MisskeyConnectionError {
     TlsHandshakeError(native_tls::HandshakeError<TcpStream>),
     /// TCP 通信にエラーが発生したとき。
     IoError(io::Error),
+    /// HTTP 通信でエラーが発生したとき。
+    HttpError(http::Error),
     
     // クライアント側で発生したエラー。
+    /// UTF-8以外の文字列
+    NotUtf8Error(FromUtf8Error),
     /// 無効な URI
-    InvalidUriError(http::uri::InvalidUriParts),
+    InvalidUriError(http::uri::InvalidUri),
     /// 無効なアドレス
-    InvalidAuthorityError(http::uri::InvalidUri),
+    InvalidAuthorityError,
     /// シリアル化または逆シリアル化に失敗したとき
     SerdeError(serde_json::Error),
     /// Misskey サーバーからエラーの応答があったとき。
@@ -39,6 +43,12 @@ impl Display for MisskeyConnectionError {
 impl From<io::Error> for MisskeyConnectionError {
     fn from(value: io::Error) -> Self {
         Self::IoError(value)
+    }
+}
+
+impl From<http::Error> for MisskeyConnectionError {
+    fn from(value: http::Error) -> Self {
+        Self::HttpError(value)
     }
 }
 
@@ -60,21 +70,21 @@ impl From<serde_json::Error> for MisskeyConnectionError {
     }
 }
 
+impl From<FromUtf8Error> for MisskeyConnectionError {
+    fn from(value: FromUtf8Error) -> Self {
+        Self::NotUtf8Error(value)
+    }
+}
+
 impl From<ServerError> for MisskeyConnectionError {
     fn from(value: ServerError) -> Self {
         Self::ServerResponseError(value)
     }
 }
 
-impl From<InvalidUriParts> for MisskeyConnectionError {
-    fn from(value: InvalidUriParts) -> Self {
-        Self::InvalidUriError(value)
-    }
-}
-
 impl From<InvalidUri> for MisskeyConnectionError {
     fn from(value: InvalidUri) -> Self {
-        Self::InvalidAuthorityError(value)
+        Self::InvalidUriError(value)
     }
 }
 

@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Display};
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{responses::notifications::NotificationInfo, MisskeyClientRequest};
+use crate::{responses::notifications::NotificationInfo, FixedEndpointMisskeyClientRequest};
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -80,7 +80,7 @@ impl GetNotifications {
     }
 }
 
-impl MisskeyClientRequest for GetNotifications {
+impl FixedEndpointMisskeyClientRequest for GetNotifications {
     const ENDPOINT: &'static str = "/i/notifications";
 
     type Response = Vec<NotificationInfo>;

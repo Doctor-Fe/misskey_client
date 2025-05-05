@@ -48,8 +48,8 @@ pub struct NoteInfo {
 }
 
 impl NoteId for NoteInfo {
-    fn to_note_id(&self) -> String {
-        self.id().clone()
+    fn to_note_id(self) -> String {
+        self.id
     }
 }
 
@@ -120,20 +120,20 @@ impl CreatedNoteInfo {
 pub struct DetailedUserInfo {
     #[serde(default)] achievements: Vec<AchievementInfo>,
     also_known_as: UnknownValue,
-    #[serde(default)] always_mark_nsfw: bool,
-    #[serde(default)] auto_accept_followed: bool,
-    #[serde(default)] auto_sensitive: bool,
+    always_mark_nsfw: Option<bool>,
+    auto_accept_followed: Option<bool>,
+    auto_sensitive: Option<bool>,
     avatar_blurhash: Option<String>,
     #[serde(default)] avatar_decorations: Vec<AvatarDecorationInfo>,
     avatar_id: Option<String>,
-    avatar_url: Option<String>, //  todo Uri に変更を検討
+    avatar_url: Option<String>, //  TODO Uri に変更を検討
     #[serde(default)] badge_roles: Vec<BadgeRoleInfo>,
     banner_blurhash: Option<String>,
     banner_id: Option<String>,
     banner_url: Option<String>,
-    birthday: Option<UnknownValue>, // todo DateTime に変更を検討
+    birthday: Option<String>, // TODO 専用の構造体の作成を検討
     #[serde(default)] careful_bot: bool,
-    created_at: Option<String>, // TODO DateTime に変更を検討
+    created_at: Option<DateTime<Utc>>,
     description: Option<String>, // TODO null が入ることがあるかのチェック
     #[serde(default)] email_notification_types: Vec<UnknownValue>, // 中身は何か
     emojis: UnknownValue,
@@ -142,13 +142,13 @@ pub struct DetailedUserInfo {
     followers_visibility: String, // TODO 列挙型を作る
     following_count: usize,
     following_visibility: String, // TODO 列挙型を作る
-    #[serde(default)] has_pending_received_follow_request: bool,
-    #[serde(default)] has_unread_announcement: bool,
-    #[serde(default)] has_unread_antenna: bool,
-    #[serde(default)] has_unread_channel: bool,
-    #[serde(default)] has_unread_mentions: bool,
-    #[serde(default)] has_unread_notifications: bool,
-    #[serde(default)] has_unread_specified_notes: bool,
+    has_pending_received_follow_request: Option<bool>,
+    has_unread_announcement: Option<bool>,
+    has_unread_antenna: Option<bool>,
+    has_unread_channel: Option<bool>,
+    has_unread_mentions: Option<bool>,
+    has_unread_notifications: Option<bool>,
+    has_unread_specified_notes: Option<bool>,
     #[serde(default)] hide_online_status: bool,
     host: Option<String>,
     id: String,

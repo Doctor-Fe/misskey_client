@@ -1,4 +1,4 @@
-use derive_getters::Getters;
+use http::{Request, Version};
 use itertools::Itertools;
 use std::{collections::HashSet, fmt::Display, io::{Read, Write}};
 use serde_derive::Deserialize;
@@ -15,28 +15,19 @@ pub struct MiAuth<T> where T: Read + Write {
 
 impl<T> MiAuth<T> where T: Read + Write {
     pub fn check(mut self) -> MisskeyConnectionResult<MiAuthStatus<T>> {
-        let req = crate::http::requests::HttpRequest::new(crate::http::requests::Method::Post, format!("/api/miauth/{}/check", self.uuid), "HTTP/1.1")
-            .header("Accept-Chatset", "UTF-8")
-            .header("Accept-Encoding", "identity")
-            .header("Connection", "keep-alive")
-            .header("Host", &self.client.server_address);
+        let req = Request::post(format!("/api/miauth/{}/check", self.uuid))
+            .version(Version::HTTP_11)
+            .header(http::header::ACCEPT_CHARSET, "UTF-8")
+            .header(http::header::ACCEPT_ENCODING, "identity")
+            .header(http::header::CONNECTION, "keep-alive")
+            .header(http::header::HOST, self.client.authority.host())
+            .body(vec![].into_iter())?;
 
-        let body: Vec<u8> = req.into_iter().collect();
-
-        self.client.stream.write(&body)?;
-        self.client.stream.flush()?;
-
-        let response_str = crate::http::read(&mut self.client.stream)?;
-
-        match serde_json::from_str::<MiAuthServerResponse>(&response_str) {
-            Ok(e) => {
-                if let (Some(token), Some(user)) = (e.token, e.user) {
-                    Ok(MiAuthStatus::Succeed(self.client.login(token), user))
-                } else {
-                    Ok(MiAuthStatus::Pending(self))
-                }
-            },
-            Err(e) => Err(e.into()),
+        let response = self.client.internal_request(req)?;
+        match serde_json::from_str::<MiAuthServerResponse>(&response)? {
+            MiAuthServerResponse { ok: true, token: Some(token), user: Some(user) } => Ok(MiAuthStatus::Succeed(self.client.login(token), user)),
+            MiAuthServerResponse { ok: false, token: None, user: None } => Ok(MiAuthStatus::Pending(self)),
+            _ => Ok(MiAuthStatus::Pending(self)),
         }
     }
 
@@ -62,10 +53,9 @@ pub struct MiAuthBuilder<T> where T: Read + Write {
 
 impl<T> MiAuthBuilder<T> where T: Read + Write {
     pub(crate) fn new(client: MisskeyHttpClient<T>) -> Self {
-        let uuid = Uuid::new_v4();
         Self {
             client,
-            uuid,
+            uuid: Uuid::new_v4(),
             uri: None,
             name: None,
             icon: None,
@@ -113,12 +103,14 @@ impl<T> MiAuthBuilder<T> where T: Read + Write {
         if !permission.is_empty() {
             list.push(format!("permission={}", permission.into_iter().join(",")));
         }
-        for i in [("callback", callback), ("icon", icon), ("name", name), ("uri", uri)] {
-            if let Some(a) = i.1 {
-                list.push(format!("{}={}", i.0, a));
-            }
+        for value in [("callback", callback), ("icon", icon), ("name", name), ("uri", uri)]
+            .into_iter()
+            .filter_map(|a| a.1.map(|b| format!("{}={}", a.0, b)))
+        {
+            list.push(value);
         }
-        let uri = format!("/miauth/{}{}{}",
+        let uri = format!("{}/miauth/{}{}{}",
+            client.authority.as_str(),
             uuid,
             if list.is_empty() {""} else {"?"},
             list.into_iter().join("&")
@@ -127,7 +119,7 @@ impl<T> MiAuthBuilder<T> where T: Read + Write {
     }
 }
 
-#[derive(Debug, Deserialize, Getters)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct MiAuthServerResponse {
     ok: bool,

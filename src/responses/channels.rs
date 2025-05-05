@@ -13,8 +13,7 @@ pub struct ChannelInfo {
     description: Option<String>,
     user_id: Option<String>,
     banner_url: Option<String>,
-    #[serde(default)]
-    pinned_note_ids: Vec<String>,
+    #[serde(default)] pinned_note_ids: Vec<String>,
     color: String,
     is_archived: bool,
     users_count: usize,
@@ -23,8 +22,7 @@ pub struct ChannelInfo {
     allow_renote_to_external: bool,
     is_following: bool,
     is_favorited: bool,
-    #[serde(default)]
-    pinned_notes: Vec<NoteInfo>,
+    #[serde(default)] pinned_notes: Vec<NoteInfo>,
 }
 
 #[derive(Debug, Deserialize, Getters)]

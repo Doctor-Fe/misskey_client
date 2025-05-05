@@ -1,9 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde_derive::Serialize;
 
-use crate::{
-    responses::{notes::NoteInfo, users::{LiteUserInfo, RelationInfo}}, traits::UserId, MaybeMultiple, MisskeyClientRequest
-};
+use crate::{responses::{notes::NoteInfo, users::{LiteUserInfo, RelationInfo}}, traits::UserId, MaybeMultiple, FixedEndpointMisskeyClientRequest};
 
 /// ユーザー名をもとに、簡略化されたユーザー情報を取得する
 #[derive(Debug, Serialize)]
@@ -30,7 +28,7 @@ impl<'a> GetLiteUserInfo<'a> {
     }
 }
 
-impl MisskeyClientRequest for GetLiteUserInfo<'_> {
+impl FixedEndpointMisskeyClientRequest for GetLiteUserInfo<'_> {
     const ENDPOINT: &'static str = "/users/show";
 
     type Response = LiteUserInfo;
@@ -45,14 +43,10 @@ pub struct GetNotes<'a> {
     with_channel_notes: bool,
     /// 1以上100以下. 省略時は10.
     limit: usize,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    since_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    until_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    since_date: Option<i64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    until_date: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")] since_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")] until_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")] since_date: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")] until_date: Option<i64>,
     allow_partial: bool,
     with_files: bool,
 }
@@ -145,7 +139,7 @@ impl<'a> GetNotes<'a> {
     }
 }
 
-impl MisskeyClientRequest for GetNotes<'_> {
+impl FixedEndpointMisskeyClientRequest for GetNotes<'_> {
     const ENDPOINT: &'static str = "/users/notes";
 
     type Response = Vec<NoteInfo>;
@@ -153,10 +147,8 @@ impl MisskeyClientRequest for GetNotes<'_> {
 
 #[derive(Debug, Serialize)]
 pub struct GetRelation {
-    #[serde(rename = "userId", skip_serializing_if = "Option::is_none")]
-    user_id: Option<String>,
-    #[serde(rename = "userId", skip_serializing_if = "Vec::is_empty")]
-    user_ids: Vec<String>,
+    #[serde(rename = "userId", skip_serializing_if = "Option::is_none")] user_id: Option<String>,
+    #[serde(rename = "userId", skip_serializing_if = "Vec::is_empty")] user_ids: Vec<String>,
 }
 
 impl GetRelation {
@@ -170,12 +162,12 @@ impl GetRelation {
     pub fn multiple<T: UserId>(user_ids: impl IntoIterator<Item = T>) -> Self {
         Self {
             user_id: None,
-            user_ids: user_ids.into_iter().map(|a| a.to_user_id()).collect(),
+            user_ids: user_ids.into_iter().map(T::to_user_id).collect(),
         }
     }
 }
 
-impl MisskeyClientRequest for GetRelation {
+impl FixedEndpointMisskeyClientRequest for GetRelation {
     const ENDPOINT: &'static str = "/users/relation";
 
     type Response = MaybeMultiple<RelationInfo>;
