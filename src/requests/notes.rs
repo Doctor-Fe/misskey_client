@@ -1,6 +1,6 @@
 use serde_derive::Serialize;
 
-use crate::{responses::notes::{CreatedNoteInfo, NoteInfo, NoteVisibility}, traits::{ChannelId, NoteId}, FixedEndpointMisskeyClientRequest};
+use crate::{responses::notes::{CreatedNoteInfo, NoteInfo, NoteVisibility}, traits::{ChannelId, NoteId}, FixedEndpointJsonRequest};
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -99,7 +99,7 @@ impl<'a> CreateNote<'a> {
     }
 }
 
-impl FixedEndpointMisskeyClientRequest for CreateNote<'_> {
+impl FixedEndpointJsonRequest for CreateNote<'_> {
     const ENDPOINT: &'static str = "/notes/create";
 
     type Response = CreatedNoteInfo;
@@ -168,7 +168,7 @@ impl<'a> SearchNote<'a> {
     }
 }
 
-impl FixedEndpointMisskeyClientRequest for SearchNote<'_> {
+impl FixedEndpointJsonRequest for SearchNote<'_> {
     const ENDPOINT: &'static str = "/notes/search";
 
     type Response = Vec<NoteInfo>;
@@ -186,7 +186,7 @@ impl DeleteNote {
     }
 }
 
-impl FixedEndpointMisskeyClientRequest for DeleteNote {
+impl FixedEndpointJsonRequest for DeleteNote {
     const ENDPOINT: &'static str = "/notes/delete";
     
     type Response = ();

@@ -1,9 +1,12 @@
 use std::io::{Read, Write};
 
 use errors::{MisskeyConnectionResult, ServerError};
-use http::{uri::Authority, Request, Version};
+use http::{header, uri::{Authority, InvalidUri}, Request, Response, Version};
+use itertools::Itertools;
 use miauth::MiAuthBuilder;
-use serde::{Deserialize, Serialize};
+
+pub use traits::MisskeyClientRequest;
+pub use traits::json::{FixedEndpointJsonRequest, JsonRequest};
 
 // TODO レスポンス型に Clone トレイトを実装するべきか否かの検討。
 
@@ -23,8 +26,8 @@ pub struct MisskeyHttpClient<T> where T: Read + Write {
 
 impl<T> MisskeyHttpClient<T> where T: Read + Write {
     #[inline]
-    pub fn new(stream: T, authority: impl Into<String>) -> MisskeyConnectionResult<MisskeyHttpClient<T>> {
-        Ok(MisskeyHttpClient::internal_new(stream, authority.into().parse()?, None))
+    pub fn new(stream: T, authority: impl TryInto<Authority, Error = InvalidUri>) -> MisskeyConnectionResult<MisskeyHttpClient<T>> {
+        Ok(MisskeyHttpClient::internal_new(stream, authority.try_into()?, None))
     }
 
     #[inline]
@@ -47,38 +50,33 @@ impl<T> MisskeyHttpClient<T> where T: Read + Write {
         MisskeyHttpClient { stream, access_token, authority }
     }
 
-    pub fn request<R>(&mut self, request: &R) -> MisskeyConnectionResult<R::Response> where R: MisskeyClientRequest {
-        let with_token: RequestWithToken<R> = RequestWithToken::new(&self.access_token, request);
-        let data = serde_json::ser::to_string(&with_token)?;
+    pub fn request<R>(&mut self, request: &R) -> MisskeyConnectionResult<Response<R::Response>> where R: MisskeyClientRequest {
+        let data = request.body(self.access_token.as_deref());
         let length = data.as_bytes().len();
-        let req = http::Request::post(format!("/api{}", request.endpoint()))
+        let req = Request::post(format!("/api{}", request.endpoint()))
             .version(Version::HTTP_11)
-            .header(http::header::ACCEPT_CHARSET, "UTF-8")
-            .header(http::header::ACCEPT_ENCODING, "identity")
-            .header(http::header::CONNECTION, "keep-alive")
-            .header(http::header::CONTENT_LENGTH, length)
-            .header(http::header::CONTENT_TYPE, "application/json; Charset=UTF-8")
-            .header(http::header::HOST, self.authority.host())
+            .header(header::ACCEPT_CHARSET, "UTF-8")
+            .header(header::ACCEPT_ENCODING, "identity")
+            .header(header::CONNECTION, "keep-alive")
+            .header(header::CONTENT_LENGTH, length)
+            .header(header::CONTENT_TYPE, format!("{}; Charset=UTF-8", request.content_type()))
+            .header(header::HOST, self.authority.host())
             .body(data.bytes())?;
 
-        let response = self.internal_request(req)?;
+        let (parts, body) = self.internal_request(req)?.into_parts();
 
-        if let Ok(result) = serde_json::from_str::<R::Response>(&response) {
-            return Ok(result);
-        }
-
-        match serde_json::from_str::<ServerErrorResponse>(&response) {
-            Ok(e) => Err(e.error.into()),
-            Err(e) => Err(e.into()),
-        }
+        return if let Ok(result) = serde_json::from_str::<R::Response>(&body) {
+            Ok(Response::from_parts(parts, result))
+        } else {
+            Err(serde_json::from_str::<ServerErrorResponse>(&body)?.error.into())
+        };
     }
 
-    fn internal_request<R>(&mut self, request: Request<R>) -> MisskeyConnectionResult<String> where R: IntoIterator<Item = u8> {
-    // fn internal_request<R>(&mut self, request: ::http::Request<R>) -> MisskeyConnectionResult<http::Response<Vec<u8>>> where R: Iterator<Item = u8> {
+    fn internal_request<R>(&mut self, request: Request<R>) -> MisskeyConnectionResult<Response<String>> where R: IntoIterator<Item = u8> {
         let (parts, body) = request.into_parts();
         let request_bin: Vec<u8> = format!("{} {} {:?}\r\n", parts.method, parts.uri, parts.version).bytes()
-            .chain(parts.headers.into_iter().filter_map(|a| a.0.map(|b| (b, a.1))).map(|a| a.0.as_str().bytes().chain(b": ".repeat(1)).chain(a.1.as_bytes().into_iter().map(|a| *a)).chain([b'\r', b'\n']).collect::<Vec<_>>()).flatten())
-            .chain(b"\r\n".repeat(1))
+            .chain(parts.headers.into_iter().filter_map(|a| a.0.map(|b| (b, a.1))).map(|a| a.0.as_str().bytes().chain(*b": ").chain(a.1.as_bytes().into_iter().map(|a| *a)).chain([b'\r', b'\n']).collect::<Vec<_>>()).flatten())
+            .chain(*b"\r\n")
             .chain(body)
             .collect();
 
@@ -96,8 +94,16 @@ impl<T> MisskeyHttpClient<T> where T: Read + Write {
         let headers = String::from_utf8_lossy(&result);
         let mut headers = headers.split('\n').map(|a| a.trim());
         let mut first = headers.next().unwrap().split(' ').peekable();
-        let _version = first.next().unwrap();
-        let _code = first.next().unwrap();
+        let version = first.next().unwrap();
+        let code = first.next().unwrap();
+        let mut response = Response::builder().version(match version {
+            "HTTP/0.9" => Version::HTTP_09,
+            "HTTP/1.0" => Version::HTTP_10,
+            "HTTP/1.1" => Version::HTTP_11,
+            "HTTP/2" => Version::HTTP_2,
+            "HTTP/3" => Version::HTTP_3,
+            _ => unimplemented!(),
+        }).status(code);
         let mut message = String::new();
         while let Some(a) = first.next() {
             message.push_str(a);
@@ -107,62 +113,23 @@ impl<T> MisskeyHttpClient<T> where T: Read + Write {
         }
         let mut length: Option<usize> = None;
         for i in headers {
-            if i.to_ascii_lowercase().starts_with("content-length") {
-                length = i.split(':').skip(1).next().map(|a| a.trim().parse::<usize>().ok()).flatten();
-                break;
+            let splitted: Vec<&str> = i.split(':').collect();
+            let key = splitted[0].trim().to_ascii_lowercase();
+            let value = splitted.into_iter().skip(1).join(":").trim().to_string();
+            if key.starts_with("content-length") {
+                length = value.parse::<usize>().ok()
             }
+            response = response.header(key, value);
         }
         let length = length.unwrap_or(0);
+        let mut buff;
         if length > 0 {
-            let mut buff = vec![0; length];
+            buff = vec![0; length];
             self.stream.read_exact(&mut buff)?;
-            return Ok(String::from_utf8_lossy(&buff).to_string());
         } else {
-            return Ok(String::new());
+            buff = Vec::with_capacity(0);
         }
-        // return response.body(buff).map_err(|a| MisskeyConnectionError::HttpError(a));
-    }
-}
-
-pub trait FixedEndpointMisskeyClientRequest : Serialize where for<'de> Self::Response: Deserialize<'de> {
-    /// レスポンスの型
-    type Response;
-    /// リクエスト先のエンドポイントのアドレス。<br />
-    /// 先頭にスラッシュが必要。`/api` は不要。
-    const ENDPOINT: &'static str;
-}
-
-impl<T> MisskeyClientRequest for T where T: FixedEndpointMisskeyClientRequest {
-    type Response = T::Response;
-    
-    fn endpoint(&self) -> &str {
-        Self::ENDPOINT
-    }
-}
-
-/// Misskey サーバーへ送信可能な構造体であることを示すトレイト
-pub trait MisskeyClientRequest : Serialize where for<'de> Self::Response: Deserialize<'de> {
-    /// レスポンスの型
-    type Response;
-    /// リクエスト先のエンドポイントのアドレス。<br />
-    /// 先頭にスラッシュが必要。`/api` は不要。
-    fn endpoint(&self) -> &str;
-}
-
-#[derive(Debug, serde_derive::Serialize)]
-struct RequestWithToken<'a, T> where T: MisskeyClientRequest + Serialize {
-    #[serde(rename = "i", skip_serializing_if = "Option::is_none")]
-    token: &'a Option<String>,
-    #[serde(flatten)]
-    request: &'a T,
-}
-
-impl<'a, T> RequestWithToken<'a, T> where T: MisskeyClientRequest + Serialize {
-    fn new(token: &'a Option<String>, request: &'a T) -> Self {
-        Self {
-            token,
-            request,
-        }
+        return Ok(response.body(String::from_utf8(buff)?)?);
     }
 }
 

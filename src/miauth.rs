@@ -21,13 +21,13 @@ impl<T> MiAuth<T> where T: Read + Write {
             .header(http::header::ACCEPT_ENCODING, "identity")
             .header(http::header::CONNECTION, "keep-alive")
             .header(http::header::HOST, self.client.authority.host())
-            .body(vec![].into_iter())?;
+            .body([])?;
 
         let response = self.client.internal_request(req)?;
-        match serde_json::from_str::<MiAuthServerResponse>(&response)? {
+        match serde_json::from_str::<MiAuthServerResponse>(response.body())? {
             MiAuthServerResponse { ok: true, token: Some(token), user: Some(user) } => Ok(MiAuthStatus::Succeed(self.client.login(token), user)),
             MiAuthServerResponse { ok: false, token: None, user: None } => Ok(MiAuthStatus::Pending(self)),
-            _ => Ok(MiAuthStatus::Pending(self)),
+            _ => Ok(MiAuthStatus::Pending(self)), // TODO 形式に沿わない応答についての検討
         }
     }
 

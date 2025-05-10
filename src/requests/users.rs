@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde_derive::Serialize;
 
-use crate::{responses::{notes::NoteInfo, users::{LiteUserInfo, RelationInfo}}, traits::UserId, MaybeMultiple, FixedEndpointMisskeyClientRequest};
+use crate::{responses::{notes::NoteInfo, users::{LiteUserInfo, RelationInfo}}, traits::UserId, MaybeMultiple, FixedEndpointJsonRequest};
 
 /// ユーザー名をもとに、簡略化されたユーザー情報を取得する
 #[derive(Debug, Serialize)]
@@ -28,7 +28,7 @@ impl<'a> GetLiteUserInfo<'a> {
     }
 }
 
-impl FixedEndpointMisskeyClientRequest for GetLiteUserInfo<'_> {
+impl FixedEndpointJsonRequest for GetLiteUserInfo<'_> {
     const ENDPOINT: &'static str = "/users/show";
 
     type Response = LiteUserInfo;
@@ -139,7 +139,7 @@ impl<'a> GetNotes<'a> {
     }
 }
 
-impl FixedEndpointMisskeyClientRequest for GetNotes<'_> {
+impl FixedEndpointJsonRequest for GetNotes<'_> {
     const ENDPOINT: &'static str = "/users/notes";
 
     type Response = Vec<NoteInfo>;
@@ -167,7 +167,7 @@ impl GetRelation {
     }
 }
 
-impl FixedEndpointMisskeyClientRequest for GetRelation {
+impl FixedEndpointJsonRequest for GetRelation {
     const ENDPOINT: &'static str = "/users/relation";
 
     type Response = MaybeMultiple<RelationInfo>;

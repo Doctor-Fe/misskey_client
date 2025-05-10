@@ -1,4 +1,15 @@
+pub mod json;
+
+use serde::Deserialize;
+
 use crate::responses::users::LiteUserInfo;
+
+pub trait MisskeyClientRequest where for<'de> Self::Response: Deserialize<'de> {
+    type Response;
+    fn endpoint(&self) -> &str;
+    fn content_type(&self) -> &str;
+    fn body(&self, token: Option<&str>) -> String;
+}
 
 pub trait NoteId {
     fn to_note_id(self) -> String;

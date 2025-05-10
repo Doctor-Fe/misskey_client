@@ -1,11 +1,11 @@
 use serde_derive::Serialize;
 
-use crate::{responses::channels::ChannelInfo, FixedEndpointMisskeyClientRequest};
+use crate::{responses::channels::ChannelInfo, FixedEndpointJsonRequest};
 
 #[derive(Debug, Serialize)]
 pub struct GetFavoriteChannels;
 
-impl FixedEndpointMisskeyClientRequest for GetFavoriteChannels {
+impl FixedEndpointJsonRequest for GetFavoriteChannels {
     const ENDPOINT: &'static str = "/channels/my-favorites";
 
     type Response = Vec<ChannelInfo>;

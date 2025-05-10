@@ -1,6 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{responses::charts::{ActiveUserChart, ApRequestChart, DriveChart, FederationChart}, FixedEndpointMisskeyClientRequest};
+use crate::{responses::charts::{ActiveUserChart, ApRequestChart, DriveChart, FederationChart}, FixedEndpointJsonRequest};
 
 #[derive(Clone, Copy, Debug, Serialize)]
 pub struct CommonChartRequestBody {
@@ -35,7 +35,7 @@ impl GetActiveUsersChart {
     }
 }
 
-impl FixedEndpointMisskeyClientRequest for GetActiveUsersChart {
+impl FixedEndpointJsonRequest for GetActiveUsersChart {
     const ENDPOINT: &'static str = "/charts/active-users";
 
     type Response = ActiveUserChart;
@@ -60,7 +60,7 @@ impl GetApRequestChart {
     }
 }
 
-impl FixedEndpointMisskeyClientRequest for GetApRequestChart {
+impl FixedEndpointJsonRequest for GetApRequestChart {
     const ENDPOINT: &'static str = "/charts/ap-request";
 
     type Response = ApRequestChart;
@@ -78,7 +78,7 @@ impl GetDriveChart {
     }
 }
 
-impl FixedEndpointMisskeyClientRequest for GetDriveChart {
+impl FixedEndpointJsonRequest for GetDriveChart {
     const ENDPOINT: &'static str = "/charts/drive";
 
     type Response = DriveChart;
@@ -95,7 +95,7 @@ impl GetFederationChart {
     }
 }
 
-impl FixedEndpointMisskeyClientRequest for GetFederationChart {
+impl FixedEndpointJsonRequest for GetFederationChart {
     const ENDPOINT: &'static str = "/charts/federation";
 
     type Response = FederationChart;
