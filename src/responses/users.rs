@@ -1,9 +1,9 @@
-use std::{fmt::Display, str::FromStr};
+use std::{fmt::{Debug, Display}, str::FromStr};
 
 use derive_getters::Getters;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::UnknownValue;
+use crate::{errors::InvalidEnumString, UnknownValue};
 
 #[derive(Debug, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
@@ -55,7 +55,7 @@ impl Display for OnlineStatus {
 }
 
 impl FromStr for OnlineStatus {
-    type Err = ();
+    type Err = InvalidEnumString;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
@@ -63,7 +63,7 @@ impl FromStr for OnlineStatus {
             "offline" => Self::Offline,
             "online" => Self::Online,
             "unknown" => Self::Unknown,
-            _ => return Err(()),
+            _ => return Err(InvalidEnumString),
         })
     }
 }

@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use derive_getters::Getters;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{traits::NoteId, UnknownValue};
+use crate::{errors::InvalidEnumString, traits::NoteId, UnknownValue};
 
 use super::{channels::LiteChannelInfo, users::{AvatarDecorationInfo, BadgeRoleInfo, LiteUserInfo, OnlineStatus}};
 
@@ -62,6 +62,12 @@ pub enum NoteVisibility {
     Specified,
 }
 
+impl Default for NoteVisibility {
+    fn default() -> Self {
+        NoteVisibility::Public
+    }
+}
+
 impl Display for NoteVisibility {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", match self {
@@ -74,7 +80,7 @@ impl Display for NoteVisibility {
 }
 
 impl FromStr for NoteVisibility {
-    type Err = (); // TODO 意味のある型
+    type Err = InvalidEnumString;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
@@ -82,7 +88,7 @@ impl FromStr for NoteVisibility {
             "home" => Self::Home,
             "followers" => Self::Followers,
             "specified" => Self::Specified,
-            _ => return Err(()),
+            _ => return Err(InvalidEnumString),
         })
     }
 }

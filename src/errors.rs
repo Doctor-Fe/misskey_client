@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display, io, string::FromUtf8Error};
+use std::{error::Error, fmt::{Debug, Display}, io, string::FromUtf8Error};
 
 use derive_getters::Getters;
 use http::uri::InvalidUri;
@@ -8,18 +8,17 @@ pub type MisskeyConnectionResult<T> = Result<T, MisskeyConnectionError>;
 
 #[derive(Debug)]
 pub enum MisskeyConnectionError {
-    // リクエスト送受信処理中に発生する可能性のあるエラーが発生したとき。
-
     /// TCP 通信にエラーが発生したとき。
     IoError(io::Error),
+
     /// HTTP 通信でエラーが発生したとき。
     HttpError(http::Error),
-    
-    // クライアント側で発生したエラー。
-    /// UTF-8以外の文字列
-    NotUtf8Error(FromUtf8Error),
     /// 無効な URI
     InvalidUriError(http::uri::InvalidUri),
+    
+    /// UTF-8以外の文字列
+    NotUtf8Error(FromUtf8Error),
+
     /// 無効なアドレス
     InvalidAuthorityError,
     /// シリアル化または逆シリアル化に失敗したとき
@@ -71,6 +70,22 @@ impl From<InvalidUri> for MisskeyConnectionError {
         Self::InvalidUriError(value)
     }
 }
+
+pub struct InvalidEnumString;
+
+impl Debug for InvalidEnumString {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("invalid enum string")
+    }
+}
+
+impl Display for InvalidEnumString {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(self, f)
+    }
+}
+
+impl Error for InvalidEnumString {}
 
 #[derive(Debug, Getters, Deserialize)]
 pub struct ServerError {

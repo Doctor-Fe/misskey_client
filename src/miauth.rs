@@ -1,4 +1,4 @@
-use http::{Request, Version};
+use http::{header, Request, Uri, Version};
 use itertools::Itertools;
 use std::{collections::HashSet, fmt::Display, io::{Read, Write}};
 use serde_derive::Deserialize;
@@ -10,17 +10,17 @@ use crate::{responses::notes::DetailedUserInfo, MisskeyHttpClient};
 pub struct MiAuth<T> where T: Read + Write {
     client: MisskeyHttpClient<T>,
     uuid: Uuid,
-    uri: String,
+    uri: Uri,
 }
 
 impl<T> MiAuth<T> where T: Read + Write {
     pub fn check(mut self) -> MisskeyConnectionResult<MiAuthStatus<T>> {
         let req = Request::post(format!("/api/miauth/{}/check", self.uuid))
             .version(Version::HTTP_11)
-            .header(http::header::ACCEPT_CHARSET, "UTF-8")
-            .header(http::header::ACCEPT_ENCODING, "identity")
-            .header(http::header::CONNECTION, "keep-alive")
-            .header(http::header::HOST, self.client.authority.host())
+            .header(header::ACCEPT_CHARSET, "UTF-8")
+            .header(header::ACCEPT_ENCODING, "identity")
+            .header(header::CONNECTION, "keep-alive")
+            .header(header::HOST, self.client.authority.host())
             .body([])?;
 
         let response = self.client.internal_request(req)?;
@@ -31,7 +31,7 @@ impl<T> MiAuth<T> where T: Read + Write {
         }
     }
 
-    pub fn get_uri(&self) -> &str {
+    pub fn get_uri(&self) -> &Uri {
         &self.uri
     }
 }
@@ -109,12 +109,15 @@ impl<T> MiAuthBuilder<T> where T: Read + Write {
         {
             list.push(value);
         }
-        let uri = format!("{}/miauth/{}{}{}",
-            client.authority.as_str(),
-            uuid,
-            if list.is_empty() {""} else {"?"},
-            list.into_iter().join("&")
-        );
+        let uri = Uri::builder().authority(client.authority.clone())
+            .path_and_query(format!("/miauth/{}{}{}",
+                    uuid,
+                    if list.is_empty() {""} else {"?"},
+                    list.into_iter().join("&")
+                )
+            )
+            .build()
+            .expect("Internal uri error.");
         return MiAuth {client, uuid, uri}
     }
 }
