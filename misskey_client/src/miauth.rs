@@ -5,7 +5,7 @@ use serde_derive::Deserialize;
 use uuid::Uuid;
 
 use crate::{errors::InvalidEnumString, MisskeyClientRequest, MisskeyHttpClient};
-use crate::responses::notes::DetailedUserInfo;
+use crate::responses::users::DetailedUserInfo;
 
 pub struct MiAuth<T> {
     pub(crate) client: MisskeyHttpClient<T>,

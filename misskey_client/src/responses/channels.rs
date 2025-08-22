@@ -1,14 +1,15 @@
+use chrono::{DateTime, Utc};
 use derive_getters::Getters;
 use serde_derive::Deserialize;
 
-use super::notes::NoteInfo;
+use crate::responses::notes::NoteInfo;
 
 #[derive(Debug, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
 pub struct ChannelInfo {
     id: String,
-    created_at: String,
-    last_noted_at: Option<String>,
+    created_at: DateTime<Utc>,
+    last_noted_at: Option<DateTime<Utc>>,
     name: String,
     description: Option<String>,
     user_id: Option<String>,

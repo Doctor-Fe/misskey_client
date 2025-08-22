@@ -1,6 +1,9 @@
-use serde_derive::{Deserialize, Serialize};
+use std::fmt::Debug;
 
-use crate::{responses::charts::{ActiveUserChart, ApRequestChart, DriveChart, FederationChart}, FixedEndpointJsonRequest};
+use misskey_client_macroes::FixedEndpointJsonRequest;
+use serde_derive::Serialize;
+
+use crate::{common::ChartSpan, responses::charts::{ActiveUserChart, ApRequestChart, DriveChart, FederationChart}};
 
 #[derive(Clone, Copy, Debug, Serialize)]
 pub struct CommonChartRequestBody {
@@ -23,7 +26,8 @@ impl CommonChartRequestBody {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "/chars/active-users", response = ActiveUserChart)]
 pub struct GetActiveUsersChart {
     #[serde(flatten)]
     common_body: CommonChartRequestBody,
@@ -35,20 +39,8 @@ impl GetActiveUsersChart {
     }
 }
 
-impl FixedEndpointJsonRequest for GetActiveUsersChart {
-    const ENDPOINT: &'static str = "/charts/active-users";
-
-    type Response = ActiveUserChart;
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ChartSpan {
-    Day,
-    Hour,
-}
-
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "/charts/ap-request", response = ApRequestChart)]
 pub struct GetApRequestChart {
     #[serde(flatten)]
     common_body: CommonChartRequestBody,
@@ -60,13 +52,8 @@ impl GetApRequestChart {
     }
 }
 
-impl FixedEndpointJsonRequest for GetApRequestChart {
-    const ENDPOINT: &'static str = "/charts/ap-request";
-
-    type Response = ApRequestChart;
-}
-
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "/charts/drive", response = DriveChart)]
 pub struct GetDriveChart {
     #[serde(flatten)]
     common_body: CommonChartRequestBody,
@@ -78,13 +65,8 @@ impl GetDriveChart {
     }
 }
 
-impl FixedEndpointJsonRequest for GetDriveChart {
-    const ENDPOINT: &'static str = "/charts/drive";
-
-    type Response = DriveChart;
-}
-
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "/charts/federation", response = FederationChart)]
 pub struct GetFederationChart {
     common_body: CommonChartRequestBody,
 }
@@ -93,10 +75,4 @@ impl GetFederationChart {
     pub fn new(common_body: CommonChartRequestBody) -> Self {
         Self { common_body }
     }
-}
-
-impl FixedEndpointJsonRequest for GetFederationChart {
-    const ENDPOINT: &'static str = "/charts/federation";
-
-    type Response = FederationChart;
 }

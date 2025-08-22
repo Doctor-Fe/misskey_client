@@ -1,8 +1,10 @@
+use misskey_client_macroes::FixedEndpointJsonRequest;
 use serde_derive::Serialize;
 
-use crate::{responses::notes::{CreatedNoteInfo, NoteInfo, NoteVisibility}, traits::{ChannelId, NoteId}, FixedEndpointJsonRequest};
+use crate::{common::NoteVisibility, responses::notes::{CreatedNoteInfo, NoteInfo}, traits::{ChannelId, NoteId}};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "/notes/create", response = CreatedNoteInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateNote<'a> {
     visibility: NoteVisibility,
@@ -119,13 +121,8 @@ impl<'a> CreateNote<'a> {
     }
 }
 
-impl FixedEndpointJsonRequest for CreateNote<'_> {
-    const ENDPOINT: &'static str = "/notes/create";
-
-    type Response = CreatedNoteInfo;
-}
-
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "/notes/search", response = Vec<NoteInfo>)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchNote<'a> {
     query: &'a str,
@@ -188,13 +185,8 @@ impl<'a> SearchNote<'a> {
     }
 }
 
-impl FixedEndpointJsonRequest for SearchNote<'_> {
-    const ENDPOINT: &'static str = "/notes/search";
-
-    type Response = Vec<NoteInfo>;
-}
-
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "/notes/delete", response = ())]
 #[serde(rename_all = "camelCase")]
 pub struct DeleteNote {
     note_id: String,
@@ -204,10 +196,4 @@ impl DeleteNote {
     pub fn new(note_id: impl NoteId) -> Self {
         Self { note_id: note_id.to_note_id() }
     }
-}
-
-impl FixedEndpointJsonRequest for DeleteNote {
-    const ENDPOINT: &'static str = "/notes/delete";
-    
-    type Response = ();
 }

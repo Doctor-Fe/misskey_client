@@ -1,10 +1,12 @@
-use std::{collections::HashSet, fmt::Display};
+use std::collections::HashSet;
 
-use serde_derive::{Deserialize, Serialize};
+use misskey_client_macroes::FixedEndpointJsonRequest;
+use serde_derive::Serialize;
 
-use crate::{responses::notifications::NotificationInfo, FixedEndpointJsonRequest};
+use crate::{common::NotificationType, responses::notifications::NotificationInfo};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "/i/notifications", response = Vec<NotificationInfo>)]
 #[serde(rename_all = "camelCase")]
 pub struct GetNotifications {
     limit: usize,
@@ -77,55 +79,5 @@ impl GetNotifications {
             self.exclude_types.insert(i);
         }
         self
-    }
-}
-
-impl FixedEndpointJsonRequest for GetNotifications {
-    const ENDPOINT: &'static str = "/i/notifications";
-
-    type Response = Vec<NotificationInfo>;
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum NotificationType {
-    Note,
-    Follow,
-    Mention,
-    Reply,
-    Renote,
-    Quote,
-    Reaction,
-    PollEnded,
-    ReceiveFollowRequest,
-    FollowRequestAccepted,
-    RoleAssigned,
-    AchievementEarned,
-    App,
-    Test,
-    PollVote,
-    GroupInvited,
-}
-
-impl Display for NotificationType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            NotificationType::Note => "note",
-            NotificationType::Follow => "follow",
-            NotificationType::Mention => "mention",
-            NotificationType::Reply => "reply",
-            NotificationType::Renote => "renote",
-            NotificationType::Quote => "quote",
-            NotificationType::Reaction => "reaction",
-            NotificationType::PollEnded => "pollEnded",
-            NotificationType::ReceiveFollowRequest => "receiveFollowRequest",
-            NotificationType::FollowRequestAccepted => "followRequestAccepted",
-            NotificationType::RoleAssigned => "roleAssigned",
-            NotificationType::AchievementEarned => "achievementEarned",
-            NotificationType::App => "app",
-            NotificationType::Test => "test",
-            NotificationType::PollVote => "pollVote",
-            NotificationType::GroupInvited => "groupInvited",
-        })
     }
 }

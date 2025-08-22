@@ -35,7 +35,7 @@ impl<T> MisskeyClientRequest for T where T: JsonRequest {
     }
 
     fn content_type(&self) -> Option<impl ToString> {
-        Some("application/json".to_string())
+        Some("application/json")
     }
 
     fn body(&self, token: Option<&str>) -> impl ToString {

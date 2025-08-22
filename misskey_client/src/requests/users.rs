@@ -1,10 +1,12 @@
 use chrono::{DateTime, Utc};
+use misskey_client_macroes::FixedEndpointJsonRequest;
 use serde_derive::Serialize;
 
-use crate::{responses::{notes::NoteInfo, users::{LiteUserInfo, RelationInfo}}, traits::UserId, MaybeMultiple, FixedEndpointJsonRequest};
+use crate::{responses::{notes::NoteInfo, users::{LiteUserInfo, RelationInfo}}, traits::UserId, MaybeMultiple};
 
 /// ユーザー名をもとに、簡略化されたユーザー情報を取得する
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "/users/show", response = LiteUserInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct GetLiteUserInfo<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -28,13 +30,8 @@ impl<'a> GetLiteUserInfo<'a> {
     }
 }
 
-impl FixedEndpointJsonRequest for GetLiteUserInfo<'_> {
-    const ENDPOINT: &'static str = "/users/show";
-
-    type Response = LiteUserInfo;
-}
-
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "users/notes", response = Vec<NoteInfo>)]
 #[serde(rename_all = "camelCase")]
 pub struct GetNotes<'a> {
     user_id: &'a str,
@@ -139,13 +136,8 @@ impl<'a> GetNotes<'a> {
     }
 }
 
-impl FixedEndpointJsonRequest for GetNotes<'_> {
-    const ENDPOINT: &'static str = "/users/notes";
-
-    type Response = Vec<NoteInfo>;
-}
-
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[misskey_client(endpoint = "/users/relation", response = MaybeMultiple<RelationInfo>)]
 pub struct GetRelation {
     #[serde(rename = "userId", skip_serializing_if = "Option::is_none")] user_id: Option<String>,
     #[serde(rename = "userId", skip_serializing_if = "Vec::is_empty")] user_ids: Vec<String>,
@@ -165,10 +157,4 @@ impl GetRelation {
             user_ids: user_ids.into_iter().map(T::to_user_id).collect(),
         }
     }
-}
-
-impl FixedEndpointJsonRequest for GetRelation {
-    const ENDPOINT: &'static str = "/users/relation";
-
-    type Response = MaybeMultiple<RelationInfo>;
 }

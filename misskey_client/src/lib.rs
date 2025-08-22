@@ -1,3 +1,5 @@
+//! Misskey API へのアクセスを提供するクレート
+
 use errors::ServerError;
 use http::uri::{Authority, InvalidUri};
 
@@ -18,6 +20,7 @@ pub mod miauth;
 pub mod sync;
 #[cfg(feature = "async")]
 pub mod r#async;
+pub mod common;
 
 pub type UnknownValue = serde_json::Value;
 
