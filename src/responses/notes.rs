@@ -70,11 +70,12 @@ impl Default for NoteVisibility {
 
 impl Display for NoteVisibility {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            Self::Public => "public",
-            Self::Home => "home",
-            Self::Followers => "followers",
-            Self::Specified => "specified",
+        use NoteVisibility::*;
+        f.write_str(match self {
+            Public => "public",
+            Home => "home",
+            Followers => "followers",
+            Specified => "specified",
         })
     }
 }
@@ -83,11 +84,12 @@ impl FromStr for NoteVisibility {
     type Err = InvalidEnumString;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use NoteVisibility::*;
         Ok(match s {
-            "public" => Self::Public,
-            "home" => Self::Home,
-            "followers" => Self::Followers,
-            "specified" => Self::Specified,
+            "public" => Public,
+            "home" => Home,
+            "followers" => Followers,
+            "specified" => Specified,
             _ => return Err(InvalidEnumString),
         })
     }
@@ -145,9 +147,9 @@ pub struct DetailedUserInfo {
     emojis: UnknownValue,
     #[serde(default)] fields: Vec<FieldInfo>,
     followers_count: usize,
-    followers_visibility: String, // TODO 列挙型を作る
+    followers_visibility: StatusVisibility,
     following_count: usize,
-    following_visibility: String, // TODO 列挙型を作る
+    following_visibility: StatusVisibility,
     has_pending_received_follow_request: Option<bool>,
     has_unread_announcement: Option<bool>,
     has_unread_antenna: Option<bool>,
@@ -203,6 +205,39 @@ pub struct DetailedUserInfo {
     #[serde(default)] user_password_less_login: bool,
     username: String,
     #[serde(default)] verified_links: Vec<UnknownValue>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum StatusVisibility {
+    Followers,
+    Private,
+    Public,
+}
+
+impl FromStr for StatusVisibility {
+    type Err = InvalidEnumString;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use StatusVisibility::*;
+        Ok(match s {
+            "followers" => Followers,
+            "private" => Private,
+            "public" => Public,
+            _ => return Err(InvalidEnumString)
+        })
+    }
+}
+
+impl Display for StatusVisibility {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use StatusVisibility::*;
+        f.write_str(match self {
+            Followers => "followers",
+            Private => "private",
+            Public => "public",
+        })
+    }
 }
 
 #[derive(Debug, Deserialize, Getters)]

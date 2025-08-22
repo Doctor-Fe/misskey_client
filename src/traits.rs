@@ -6,8 +6,8 @@ use crate::responses::users::LiteUserInfo;
 
 pub trait MisskeyClientRequest where for<'de> Self::Response: Deserialize<'de> {
     type Response;
-    fn endpoint(&self) -> &str;
-    fn content_type(&self) -> &str;
+    fn endpoint(&self) -> String;
+    fn content_type(&self) -> Option<String>;
     fn body(&self, token: Option<&str>) -> String;
 }
 

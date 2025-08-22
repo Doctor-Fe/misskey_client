@@ -6,7 +6,7 @@ use crate::{responses::notes::{CreatedNoteInfo, NoteInfo, NoteVisibility}, trait
 #[serde(rename_all = "camelCase")]
 pub struct CreateNote<'a> {
     visibility: NoteVisibility,
-    // visible_user_ids: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")] visible_user_ids: Vec<String>,
     cw: Option<&'a str>,
     local_only: bool,
     // reaction_acceptance: Option<String>,
@@ -25,9 +25,10 @@ pub struct CreateNote<'a> {
 }
 
 impl CreateNote<'_> {
-    pub fn renote(visibility: NoteVisibility, renote_id: impl NoteId) -> Self {
+    pub fn renote(renote_id: impl NoteId) -> Self {
         Self {
-            visibility,
+            visibility: NoteVisibility::Public,
+            visible_user_ids: vec![],
             cw: None,
             local_only: false,
             no_extract_hashtags: false,
@@ -42,9 +43,10 @@ impl CreateNote<'_> {
 }
 
 impl<'a> CreateNote<'a> {
-    pub fn note(text: &'a str, visibility: NoteVisibility) -> Self {
+    pub fn note(text: &'a str) -> Self {
         Self {
-            visibility,
+            visibility: NoteVisibility::Public,
+            visible_user_ids: vec![],
             cw: None,
             local_only: false,
             no_extract_hashtags: false,
@@ -57,9 +59,10 @@ impl<'a> CreateNote<'a> {
         }
     }
 
-    pub fn quote(text: &'a str, visibility: NoteVisibility, renote_id: impl NoteId) -> Self {
+    pub fn quote(text: &'a str, renote_id: impl NoteId) -> Self {
         Self {
-            visibility,
+            visibility: NoteVisibility::Public,
+            visible_user_ids: vec![],
             cw: None,
             local_only: false,
             no_extract_hashtags: false,
@@ -72,14 +75,31 @@ impl<'a> CreateNote<'a> {
         }
     }
 
+    pub fn set_visibility(self, visibility: NoteVisibility) -> Self {
+        Self {
+            visibility,
+            .. self
+        }
+    }
+
+    /// 閲覧可能なユーザー ID を指定する関数。
+    /// 公開範囲は自動で `NoteVisibility::Specified` に変更される。
+    pub fn set_visible_users(self, users: Vec<String>) -> Self {
+        Self {
+            visibility: NoteVisibility::Specified,
+            visible_user_ids: users,
+            .. self
+        }
+    }
+
     pub fn cw(mut self, cw: &'a str) -> Self {
         self.cw = Some(cw);
         self
     }
 
-    pub fn local_only(self) -> Self {
+    pub fn local_only(self, local_only: bool) -> Self {
         Self {
-            local_only: true,
+            local_only,
             .. self
         }
     }
@@ -181,8 +201,8 @@ pub struct DeleteNote {
 }
 
 impl DeleteNote {
-    pub fn new(note_id: String) -> Self {
-        Self { note_id }
+    pub fn new(note_id: impl NoteId) -> Self {
+        Self { note_id: note_id.to_note_id() }
     }
 }
 

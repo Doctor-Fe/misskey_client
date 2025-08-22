@@ -13,8 +13,8 @@ pub trait FixedEndpointJsonRequest : Serialize where for<'de> Self::Response: De
 impl<T> JsonRequest for T where T: FixedEndpointJsonRequest {
     type Response = T::Response;
     
-    fn endpoint(&self) -> &str {
-        Self::ENDPOINT
+    fn endpoint(&self) -> String {
+        Self::ENDPOINT.to_string()
     }
 }
 
@@ -24,18 +24,18 @@ pub trait JsonRequest : Serialize where for<'de> Self::Response: Deserialize<'de
     type Response;
     /// リクエスト先のエンドポイントのアドレス。<br />
     /// 先頭にスラッシュが必要。`/api` は不要。
-    fn endpoint(&self) -> &str;
+    fn endpoint(&self) -> String;
 }
 
 impl<T> MisskeyClientRequest for T where T: JsonRequest {
     type Response = T::Response;
 
-    fn endpoint(&self) -> &str {
+    fn endpoint(&self) -> String {
         JsonRequest::endpoint(self)
     }
 
-    fn content_type(&self) -> &str {
-        "application/json"
+    fn content_type(&self) -> Option<String> {
+        Some("application/json".to_string())
     }
 
     fn body(&self, token: Option<&str>) -> String {
