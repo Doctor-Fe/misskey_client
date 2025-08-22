@@ -6,9 +6,9 @@ use crate::responses::users::LiteUserInfo;
 
 pub trait MisskeyClientRequest where for<'de> Self::Response: Deserialize<'de> {
     type Response;
-    fn endpoint(&self) -> String;
-    fn content_type(&self) -> Option<String>;
-    fn body(&self, token: Option<&str>) -> String;
+    fn endpoint(&self) -> impl ToString;
+    fn content_type(&self) -> Option<impl ToString>;
+    fn body(&self, token: Option<&str>) -> impl ToString;
 }
 
 pub trait NoteId {

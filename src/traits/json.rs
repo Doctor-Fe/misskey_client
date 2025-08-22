@@ -30,15 +30,15 @@ pub trait JsonRequest : Serialize where for<'de> Self::Response: Deserialize<'de
 impl<T> MisskeyClientRequest for T where T: JsonRequest {
     type Response = T::Response;
 
-    fn endpoint(&self) -> String {
+    fn endpoint(&self) -> impl ToString {
         JsonRequest::endpoint(self)
     }
 
-    fn content_type(&self) -> Option<String> {
+    fn content_type(&self) -> Option<impl ToString> {
         Some("application/json".to_string())
     }
 
-    fn body(&self, token: Option<&str>) -> String {
+    fn body(&self, token: Option<&str>) -> impl ToString {
         serde_json::to_string(&RequestWithToken::new(token, self)).unwrap()
     }
 }

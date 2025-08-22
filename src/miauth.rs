@@ -26,15 +26,15 @@ pub(crate) struct MiAuthInfo(Uuid);
 impl MisskeyClientRequest for MiAuthInfo {
     type Response = MiAuthServerResponse;
 
-    fn endpoint(&self) -> String {
+    fn endpoint(&self) -> impl ToString {
         format!("/api/miauth/{}/check", self.0)
     }
 
-    fn content_type(&self) -> Option<String> {
-        None
+    fn content_type(&self) -> Option<impl ToString> {
+        Option::<&str>::None
     }
 
-    fn body(&self, _: Option<&str>) -> String {
+    fn body(&self, _: Option<&str>) -> impl ToString {
         String::new()
     }
 }

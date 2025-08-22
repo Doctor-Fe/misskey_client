@@ -8,9 +8,9 @@ use crate::{errors::MisskeyConnectionResult, miauth::{MiAuth, MiAuthServerRespon
 impl<T> MisskeyHttpClient<T> where T: Read + Write {
 
     pub fn request<R>(&mut self, request: &R) -> MisskeyConnectionResult<Response<R::Response>> where R: MisskeyClientRequest {
-        let data = request.body(self.access_token.as_deref());
+        let data = request.body(self.access_token.as_deref()).to_string();
         let length = data.as_bytes().len();
-        let mut req = Request::post(format!("/api{}", request.endpoint()))
+        let mut req = Request::post(format!("/api{}", request.endpoint().to_string()))
             .version(Version::HTTP_11)
             .header(header::ACCEPT_CHARSET, "UTF-8")
             .header(header::ACCEPT_ENCODING, "identity")
@@ -18,7 +18,7 @@ impl<T> MisskeyHttpClient<T> where T: Read + Write {
             .header(header::CONTENT_LENGTH, length)
             .header(header::HOST, self.authority.host());
         if let Some(content_type) = request.content_type() {
-            req = req.header(header::CONTENT_TYPE, format!("{}; Charset=UTF-8", content_type));
+            req = req.header(header::CONTENT_TYPE, format!("{}; Charset=UTF-8", content_type.to_string()));
         }
         let req = req.body(data.bytes())?;
 
