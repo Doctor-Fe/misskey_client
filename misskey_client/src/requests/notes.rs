@@ -1,83 +1,87 @@
-use misskey_client_macroes::FixedEndpointJsonRequest;
+use misskey_client_macroes::ConstParamJsonRequest;
 use serde_derive::Serialize;
 
-use crate::{common::NoteVisibility, responses::notes::{CreatedNoteInfo, NoteInfo}, traits::{ChannelId, NoteId}};
+use crate::{common::{NoteVisibility, ReactionAcceptance}, responses::notes::{CreatedNoteInfo, NoteInfo}, traits::{ChannelId, NoteId}};
 
-#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
-#[misskey_client(endpoint = "/notes/create", response = CreatedNoteInfo)]
+#[derive(Debug, Serialize, ConstParamJsonRequest)]
+#[misskey_client(endpoint = "/notes/create", response = CreatedNoteInfo, can_be_empty = true)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateNote<'a> {
+pub struct CreateNote {
     visibility: NoteVisibility,
     #[serde(skip_serializing_if = "Vec::is_empty")] visible_user_ids: Vec<String>,
-    cw: Option<&'a str>,
+    cw: Option<String>,
     local_only: bool,
-    // reaction_acceptance: Option<String>,
+    reaction_acceptance: Option<ReactionAcceptance>,
     no_extract_mentions: bool,
     no_extract_hashtags: bool,
     no_extract_emojis: bool,
     reply_id: Option<String>,
     renote_id: Option<String>,
     channel_id: Option<String>,
-    text: &'a str,
+    text: String,
     // file_ids: Vec<String>,
     // media_ids: Vec<String>,
     // poll: Poll,
     // scheduled_at: usize,
-    // no_created_note: usize,
+    no_created_note: bool,
 }
 
-impl CreateNote<'_> {
+impl CreateNote {
     pub fn renote(renote_id: impl NoteId) -> Self {
         Self {
             visibility: NoteVisibility::Public,
             visible_user_ids: vec![],
             cw: None,
             local_only: false,
+            reaction_acceptance: None,
             no_extract_hashtags: false,
             no_extract_mentions: false,
             no_extract_emojis: false,
             reply_id: None,
             renote_id: Some(renote_id.to_note_id()),
             channel_id: None,
-            text: "",
+            text: String::new(),
+            no_created_note: false,
         }
     }
-}
 
-impl<'a> CreateNote<'a> {
-    pub fn note(text: &'a str) -> Self {
+    pub fn note(text: impl ToString) -> Self {
         Self {
             visibility: NoteVisibility::Public,
             visible_user_ids: vec![],
             cw: None,
             local_only: false,
+            reaction_acceptance: None,
             no_extract_hashtags: false,
             no_extract_mentions: false,
             no_extract_emojis: false,
             reply_id: None,
             renote_id: None,
             channel_id: None,
-            text,
+            text: text.to_string(),
+            no_created_note: false,
         }
     }
 
-    pub fn quote(text: &'a str, renote_id: impl NoteId) -> Self {
+    pub fn quote(text: impl ToString, renote_id: impl NoteId) -> Self {
         Self {
             visibility: NoteVisibility::Public,
             visible_user_ids: vec![],
             cw: None,
             local_only: false,
+            reaction_acceptance: None,
             no_extract_hashtags: false,
             no_extract_mentions: false,
             no_extract_emojis: false,
             reply_id: None,
             renote_id: Some(renote_id.to_note_id()),
             channel_id: None,
-            text,
+            text: text.to_string(),
+            no_created_note: false,
         }
     }
 
-    pub fn set_visibility(self, visibility: NoteVisibility) -> Self {
+    pub fn visibility(self, visibility: NoteVisibility) -> Self {
         Self {
             visibility,
             .. self
@@ -86,7 +90,7 @@ impl<'a> CreateNote<'a> {
 
     /// 閲覧可能なユーザー ID を指定する関数。
     /// 公開範囲は自動で `NoteVisibility::Specified` に変更される。
-    pub fn set_visible_users(self, users: Vec<String>) -> Self {
+    pub fn visible_users(self, users: Vec<String>) -> Self {
         Self {
             visibility: NoteVisibility::Specified,
             visible_user_ids: users,
@@ -94,14 +98,21 @@ impl<'a> CreateNote<'a> {
         }
     }
 
-    pub fn cw(mut self, cw: &'a str) -> Self {
-        self.cw = Some(cw);
+    pub fn cw(mut self, cw: impl ToString) -> Self {
+        self.cw = Some(cw.to_string());
         self
     }
 
     pub fn local_only(self, local_only: bool) -> Self {
         Self {
             local_only,
+            .. self
+        }
+    }
+
+    pub fn reaction_acceptance(self, acceptance: ReactionAcceptance) -> Self {
+        Self {
+            reaction_acceptance: Some(acceptance),
             .. self
         }
     }
@@ -119,9 +130,17 @@ impl<'a> CreateNote<'a> {
              .. self
         }
     }
+
+    /// `true` をセットすると、作製に成功したときのレスポンスが `204` になります。
+    pub fn no_created_note(self, no_created_note: bool) -> Self {
+        Self {
+            no_created_note,
+            .. self
+        }
+    }
 }
 
-#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[derive(Debug, Serialize, ConstParamJsonRequest)]
 #[misskey_client(endpoint = "/notes/search", response = Vec<NoteInfo>)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchNote<'a> {
@@ -185,8 +204,8 @@ impl<'a> SearchNote<'a> {
     }
 }
 
-#[derive(Clone, Debug, Serialize, FixedEndpointJsonRequest)]
-#[misskey_client(endpoint = "/notes/delete", response = ())]
+#[derive(Clone, Debug, Serialize, ConstParamJsonRequest)]
+#[misskey_client(endpoint = "/notes/delete", response = (), can_be_empty = true)]
 #[serde(rename_all = "camelCase")]
 pub struct DeleteNote {
     note_id: String,

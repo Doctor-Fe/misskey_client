@@ -1,9 +1,11 @@
+use http::uri::{InvalidUri, Scheme};
 use http::Uri;
 use itertools::Itertools;
 use std::{collections::HashSet, fmt::Display, str::FromStr};
 use serde_derive::Deserialize;
 use uuid::Uuid;
 
+use crate::errors::MisskeyConnectionResult;
 use crate::{errors::InvalidEnumString, MisskeyClientRequest, MisskeyHttpClient};
 use crate::responses::users::DetailedUserInfo;
 
@@ -35,7 +37,7 @@ impl MisskeyClientRequest for MiAuthInfo {
     }
 
     fn body(&self, _: Option<&str>) -> impl ToString {
-        String::new()
+        ""
     }
 }
 
@@ -44,51 +46,53 @@ pub enum MiAuthStatus<T> {
     Succeed(MisskeyHttpClient<T>, DetailedUserInfo),
 }
 
-pub struct MiAuthBuilder<T> {
+pub struct MiAuthBuilder<S, T> {
+    callback: Option<String>,
     client: MisskeyHttpClient<T>,
+    icon: Option<String>,
+    name: Option<String>,
+    permission: HashSet<Permission>,
+    scheme: S,
     uuid: Uuid,
     uri: Option<String>,
-    name: Option<String>,
-    icon: Option<String>,
-    callback: Option<String>,
-    permission: HashSet<Permission>,
 }
 
-impl<T> MiAuthBuilder<T> {
-    pub(crate) fn new(client: MisskeyHttpClient<T>) -> Self {
+impl<S, T> MiAuthBuilder<S, T> where S: TryInto<Scheme, Error = InvalidUri> {
+    pub(crate) fn new(client: MisskeyHttpClient<T>, scheme: S) -> Self {
         Self {
+            callback: None,
             client,
+            icon: None,
+            name: None,
+            permission: HashSet::new(),
+            scheme,
             uuid: Uuid::new_v4(),
             uri: None,
-            name: None,
-            icon: None,
-            callback: None,
-            permission: HashSet::new(),
         }
     }
 
-    pub fn set_app_name(self, name: String) -> Self {
+    pub fn app_name(self, name: String) -> Self {
         Self {
             name: Some(name),
             .. self
         }
     }
 
-    pub fn set_app_icon(self, icon: impl Into<String>) -> Self {
+    pub fn app_icon(self, icon: impl Into<String>) -> Self {
         Self {
             icon: Some(icon.into()),
             .. self
         }
     }
 
-    pub fn set_callback_uri(self, uri: impl Into<String>) -> Self {
+    pub fn callback_uri(self, uri: impl Into<String>) -> Self {
         Self {
             uri: Some(uri.into()),
             .. self
         }
     }
 
-    pub fn require(mut self, permission: Permission) -> Self {
+    pub fn requires(mut self, permission: Permission) -> Self {
         self.permission.insert(permission);
         self
     }
@@ -100,8 +104,8 @@ impl<T> MiAuthBuilder<T> {
         self
     }
 
-    pub fn build(self) -> MiAuth<T> {
-        let Self {callback, client, icon, name, permission, uri, uuid} = self;
+    pub fn build(self) -> MisskeyConnectionResult<MiAuth<T>> {
+        let Self {callback, client, icon, name, permission, scheme, uri, uuid} = self;
         let mut list = Vec::with_capacity(5);
         if !permission.is_empty() {
             list.push(format!("permission={}", permission.into_iter().join(",")));
@@ -112,16 +116,12 @@ impl<T> MiAuthBuilder<T> {
         {
             list.push(value);
         }
-        let uri = Uri::builder().authority(client.authority.clone())
-            .path_and_query(format!("/miauth/{}{}{}",
-                    uuid,
-                    if list.is_empty() {""} else {"?"},
-                    list.into_iter().join("&")
-                )
-            )
-            .build()
-            .expect("Internal uri error.");
-        return MiAuth {client, info: MiAuthInfo(uuid), uri}
+        let uri = Uri::builder().scheme(scheme).authority(client.authority.clone()).path_and_query(format!("/miauth/{}{}{}",
+            uuid,
+            if list.is_empty() {""} else {"?"},
+            list.into_iter().join("&")
+        )).build()?;
+        return Ok(MiAuth {client, info: MiAuthInfo(uuid), uri})
     }
 }
 
@@ -314,7 +314,7 @@ impl Display for Permission {
 
 impl FromStr for Permission {
     type Err = InvalidEnumString;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use Permission::*;
         Ok(match s {

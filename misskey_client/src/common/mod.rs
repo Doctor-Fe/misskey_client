@@ -7,7 +7,7 @@ mod notifications;
 use std::{fmt::Display, str::FromStr};
 
 pub use charts::ChartSpan;
-pub use notes::NoteVisibility;
+pub use notes::{NoteVisibility, ReactionAcceptance};
 pub use notifications::NotificationType;
 use serde_derive::{Deserialize, Serialize};
 

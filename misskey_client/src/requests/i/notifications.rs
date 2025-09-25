@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
-use misskey_client_macroes::FixedEndpointJsonRequest;
+use misskey_client_macroes::ConstParamJsonRequest;
 use serde_derive::Serialize;
 
 use crate::{common::NotificationType, responses::notifications::NotificationInfo};
 
-#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[derive(Debug, Serialize, ConstParamJsonRequest)]
 #[misskey_client(endpoint = "/i/notifications", response = Vec<NotificationInfo>)]
 #[serde(rename_all = "camelCase")]
 pub struct GetNotifications {

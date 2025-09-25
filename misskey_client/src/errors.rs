@@ -4,6 +4,8 @@ use derive_getters::Getters;
 use http::uri::InvalidUri;
 use serde_derive::Deserialize;
 
+use crate::ServerErrorResponse;
+
 pub type MisskeyConnectionResult<T> = Result<T, MisskeyConnectionError>;
 
 #[derive(Debug)]
@@ -15,14 +17,20 @@ pub enum MisskeyConnectionError {
     HttpError(http::Error),
     /// 無効な URI
     InvalidUriError(http::uri::InvalidUri),
-    
+    InvalidUriPartsError(http::uri::InvalidUriParts),
+
     /// UTF-8以外の文字列
     NotUtf8Error(FromUtf8Error),
 
-    /// 無効なアドレス
-    InvalidAuthorityError,
     /// シリアル化または逆シリアル化に失敗したとき
-    SerdeError(serde_json::Error),
+    SerdeError {
+        /// レスポンスを正常な応答として解釈しようとした時のエラー
+        parent_error: serde_json::Error,
+        /// レスポンスをエラーの応答として解釈しようとした時のエラー
+        error: serde_json::Error,
+        /// 受け取った文字列
+        raw_string: String
+    },
     /// Misskey サーバーからエラーの応答があったとき。
     ServerResponseError(ServerError),
 }
@@ -47,15 +55,21 @@ impl From<http::Error> for MisskeyConnectionError {
     }
 }
 
-impl From<serde_json::Error> for MisskeyConnectionError {
-    fn from(value: serde_json::Error) -> Self {
-        Self::SerdeError(value)
+impl From<http::uri::InvalidUriParts> for MisskeyConnectionError {
+    fn from(value: http::uri::InvalidUriParts) -> Self {
+        Self::InvalidUriPartsError(value)
     }
 }
 
 impl From<FromUtf8Error> for MisskeyConnectionError {
     fn from(value: FromUtf8Error) -> Self {
         Self::NotUtf8Error(value)
+    }
+}
+
+impl From<ServerErrorResponse> for MisskeyConnectionError {
+    fn from(value: ServerErrorResponse) -> Self {
+        From::<ServerError>::from(value.error)
     }
 }
 

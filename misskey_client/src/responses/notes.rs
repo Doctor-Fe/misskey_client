@@ -53,6 +53,12 @@ impl NoteId for NoteInfo {
     }
 }
 
+impl NoteId for &NoteInfo {
+    fn to_note_id(self) -> String {
+        self.id.clone()
+    }
+}
+
 #[derive(Debug, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
 pub struct FileInfo {

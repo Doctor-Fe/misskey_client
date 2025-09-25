@@ -45,3 +45,17 @@ impl FromStr for NoteVisibility {
         })
     }
 }
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ReactionAcceptance {
+    /// いいねのみを受け付けます。
+    LikeOnly,
+    /// リモートユーザーからはいいねのみを受け付けます。
+    LikeOnlyForRemote,
+    /// センシティブフラグの立っていないリアクションのみを受け付けます。
+    NonSensitiveOnly,
+    /// ローカルユーザーからはセンシティブフラグの立っていないリアクションのみを受け付けます。<br />
+    /// リモートユーザーからはいいねのみを受け付けます。
+    NonSensitiveOnlyForLocalLikeOnlyForRemote,
+}

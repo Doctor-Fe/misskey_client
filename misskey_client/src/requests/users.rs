@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
-use misskey_client_macroes::FixedEndpointJsonRequest;
+use misskey_client_macroes::ConstParamJsonRequest;
 use serde_derive::Serialize;
 
 use crate::{responses::{notes::NoteInfo, users::{LiteUserInfo, RelationInfo}}, traits::UserId, MaybeMultiple};
 
 /// ユーザー名をもとに、簡略化されたユーザー情報を取得する
-#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[derive(Debug, Serialize, ConstParamJsonRequest)]
 #[misskey_client(endpoint = "/users/show", response = LiteUserInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct GetLiteUserInfo<'a> {
@@ -30,8 +30,8 @@ impl<'a> GetLiteUserInfo<'a> {
     }
 }
 
-#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
-#[misskey_client(endpoint = "users/notes", response = Vec<NoteInfo>)]
+#[derive(Debug, Serialize, ConstParamJsonRequest)]
+#[misskey_client(endpoint = "/users/notes", response = Vec<NoteInfo>)]
 #[serde(rename_all = "camelCase")]
 pub struct GetNotes<'a> {
     user_id: &'a str,
@@ -136,7 +136,7 @@ impl<'a> GetNotes<'a> {
     }
 }
 
-#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[derive(Debug, Serialize, ConstParamJsonRequest)]
 #[misskey_client(endpoint = "/users/relation", response = MaybeMultiple<RelationInfo>)]
 pub struct GetRelation {
     #[serde(rename = "userId", skip_serializing_if = "Option::is_none")] user_id: Option<String>,

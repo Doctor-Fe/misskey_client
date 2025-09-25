@@ -9,19 +9,22 @@ use crate::{common::StatusVisibility, errors::InvalidEnumString, responses::note
 #[derive(Debug, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
 pub struct LiteUserInfo {
-    id: String,
-    name: Option<String>,
-    username: String,
-    host: Option<String>,
-    avatar_url: Option<String>,
     avatar_blur_hash: Option<String>,
     avatar_decorations: Vec<AvatarDecorationInfo>,
+    avatar_url: Option<String>,
+    emojis: UnknownValue, // 用途不明
+    host: Option<String>,
+    id: String,
+    name: Option<String>,
+    online_status: OnlineStatus,
+    username: String,
+    #[serde(default)] badge_roles: Vec<BadgeRoleInfo>,
+    instance: Option<InstanceInfo>,
     is_bot: bool,
     is_cat: bool,
-    instance: Option<InstanceInfo>,
-    emojis: UnknownValue, // 用途不明
-    online_status: OnlineStatus,
-    #[serde(default)] badge_roles: Vec<BadgeRoleInfo>,
+    // make_notes_followers_only_before: Option<i32>,
+    // make_notes_hidden_before: Option<i32>,
+    // require_signin_to_view_cotents: bool,
 }
 
 #[derive(Debug, Deserialize, Getters)]

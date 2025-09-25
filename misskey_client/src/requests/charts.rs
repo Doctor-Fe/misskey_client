@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use misskey_client_macroes::FixedEndpointJsonRequest;
+use misskey_client_macroes::ConstParamJsonRequest;
 use serde_derive::Serialize;
 
 use crate::{common::ChartSpan, responses::charts::{ActiveUserChart, ApRequestChart, DriveChart, FederationChart}};
@@ -26,7 +26,7 @@ impl CommonChartRequestBody {
     }
 }
 
-#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[derive(Debug, Serialize, ConstParamJsonRequest)]
 #[misskey_client(endpoint = "/chars/active-users", response = ActiveUserChart)]
 pub struct GetActiveUsersChart {
     #[serde(flatten)]
@@ -39,7 +39,7 @@ impl GetActiveUsersChart {
     }
 }
 
-#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[derive(Debug, Serialize, ConstParamJsonRequest)]
 #[misskey_client(endpoint = "/charts/ap-request", response = ApRequestChart)]
 pub struct GetApRequestChart {
     #[serde(flatten)]
@@ -52,7 +52,7 @@ impl GetApRequestChart {
     }
 }
 
-#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[derive(Debug, Serialize, ConstParamJsonRequest)]
 #[misskey_client(endpoint = "/charts/drive", response = DriveChart)]
 pub struct GetDriveChart {
     #[serde(flatten)]
@@ -65,7 +65,7 @@ impl GetDriveChart {
     }
 }
 
-#[derive(Debug, Serialize, FixedEndpointJsonRequest)]
+#[derive(Debug, Serialize, ConstParamJsonRequest)]
 #[misskey_client(endpoint = "/charts/federation", response = FederationChart)]
 pub struct GetFederationChart {
     common_body: CommonChartRequestBody,

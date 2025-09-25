@@ -8,6 +8,7 @@ pub trait MisskeyClientRequest where for<'de> Self::Response: Deserialize<'de> {
     type Response;
     fn endpoint(&self) -> impl ToString;
     fn content_type(&self) -> Option<impl ToString>;
+    fn can_be_empty(&self) -> bool { false }
     fn body(&self, token: Option<&str>) -> impl ToString;
 }
 
