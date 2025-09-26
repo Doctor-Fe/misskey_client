@@ -160,7 +160,7 @@ pub struct DetailedUserInfo {
     #[serde(default)] logged_in_days: usize,
     memo: Option<String>,
     moved_to: Option<UnknownValue>,
-    #[serde(default)] muted_instanced: Vec<String>,
+    #[serde(default)] muted_instances: Vec<String>,
     #[serde(default)] muted_words: Vec<Vec<String>>,
     #[serde(default)] muting_notification_types: Vec<String>, // TODO 列挙型を作る
     #[serde(default)] mutual_link_sections: Vec<String>,
